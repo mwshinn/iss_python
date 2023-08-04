@@ -161,7 +161,13 @@ def call_reference_spots(config: dict, nbp_file: NotebookPage, nbp_basic: Notebo
 
     # get gene codes
     gene_names, gene_codes = np.genfromtxt(nbp_file.code_book, dtype=(str, str)).transpose()
-    gene_codes = np.array([[int(i) for i in gene_codes[j]] for j in range(len(gene_codes))])
+    if config['channel_order'] is None:
+        gene_code_map = {i : i for i in range(0, 100)}
+    else:
+        co = config['channel_order']
+        assert len(co) == len(set(co)) # All unique
+        gene_code_map = {co[i]: i for i in range(0, len(co))}
+    gene_codes = np.array([[gene_code_map[int(i)] for i in gene_codes[j]] for j in range(len(gene_codes))])
     # bled_codes[g,r,c] returned below is nan where r/c/gene_codes[g,r] outside use_rounds/channels/dyes
     bled_codes = get_bled_codes(gene_codes, bleed_matrix)
 

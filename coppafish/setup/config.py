@@ -162,6 +162,7 @@ _options = {
     'call_spots':
         {
             'bleed_matrix_method': 'str',
+            'channel_order': 'maybe_list_int',
             'color_norm_intensities': 'list_number',
             'color_norm_probs': 'list_number',
             'bleed_matrix_score_thresh': 'number',
