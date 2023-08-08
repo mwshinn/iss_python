@@ -58,9 +58,10 @@ class Viewer:
         n_legend_genes = len(gene_legend_info['GeneNames'])
         self.legend_gene_symbol = np.asarray(gene_legend_info['mpl_symbol'])
         self.legend_gene_no = np.ones(n_legend_genes, dtype=int) * -1
+        self.call_spots_gene_names = np.asarray([n if n in gene_legend_info['GeneNames'].tolist() else "other" for n in self.nb.call_spots.gene_names])
         for i in range(n_legend_genes):
             # TODO: maybe guard against different cases in this comparison
-            gene_ind = np.where(self.nb.call_spots.gene_names == gene_legend_info['GeneNames'][i])[0]
+            gene_ind = np.where(self.call_spots_gene_names == gene_legend_info['GeneNames'][i])[0]
             if len(gene_ind) > 0:
                 self.legend_gene_no[i] = gene_ind[0]
 
@@ -87,12 +88,11 @@ class Viewer:
             show_spots = quality_threshold(self.nb, 'anchor')
 
         # color to plot for all genes in the notebook
-        gene_color = np.ones((len(self.nb.call_spots.gene_names), 3))
+        gene_color = np.ones((len(self.call_spots_gene_names), 3))
         for i in range(n_legend_genes):
-            if self.legend_gene_no[i] != -1:
-                gene_color[self.legend_gene_no[i]] = [gene_legend_info.loc[i, 'ColorR'],
-                                                      gene_legend_info.loc[i, 'ColorG'],
-                                                      gene_legend_info.loc[i, 'ColorB']]
+            gene_color[self.legend_gene_no[i]] = [gene_legend_info.loc[i, 'ColorR'],
+                                                  gene_legend_info.loc[i, 'ColorG'],
+                                                  gene_legend_info.loc[i, 'ColorB']]
 
         self.viewer = napari.Viewer()
         self.viewer.window.qt_viewer.dockLayerList.setVisible(False)
@@ -139,13 +139,13 @@ class Viewer:
         # Add legend indicating genes plotted
         self.legend = {'fig': None, 'ax': None}
         self.legend['fig'], self.legend['ax'], n_gene_label_letters = \
-            add_legend(gene_legend_info=gene_legend_info, genes=nb.call_spots.gene_names)
+            add_legend(gene_legend_info=gene_legend_info, genes=self.call_spots_gene_names)
         # xy is position of each symbol in legend, need to see which gene clicked on.
         self.legend['xy'] = np.zeros((len(self.legend['ax'].collections), 2), dtype=float)
         self.legend['gene_no'] = np.zeros(len(self.legend['ax'].collections), dtype=int)
         # In legend, each gene name label has at most n_gene_label_letters letters so need to crop
         # gene_names in notebook when looking for corresponding gene in legend.
-        gene_names_crop = np.asarray([gene_name[:n_gene_label_letters] for gene_name in nb.call_spots.gene_names])
+        gene_names_crop = np.asarray([gene_name[:n_gene_label_letters] for gene_name in self.call_spots_gene_names])
         for i in range(self.legend['xy'].shape[0]):
             # Position of label for each gene in legend window
             self.legend['xy'][i] = np.asarray(self.legend['ax'].collections[i].get_offsets())
@@ -154,7 +154,7 @@ class Viewer:
                 np.where(gene_names_crop == self.legend['ax'].texts[i].get_text())[0][0]
         self.legend['fig'].mpl_connect('button_press_event', self.update_genes)
         self.viewer.window.add_dock_widget(self.legend['fig'], area='left', name='Genes')
-        self.active_genes = np.arange(len(nb.call_spots.gene_names))  # start with all genes shown
+        self.active_genes = np.arange(len(self.call_spots_gene_names))  # start with all genes shown
 
         if background_image is not None:
             # Slider to change background image contrast
@@ -264,9 +264,9 @@ class Viewer:
                     spot_no = list(selectedData)[0]
                     if self.method_buttons.method == 'OMP':
                         spot_no = spot_no - self.omp_0_ind
-                        spot_gene = self.nb.call_spots.gene_names[self.nb.omp.gene_no[spot_no]]
+                        spot_gene = self.call_spots_gene_names[self.nb.omp.gene_no[spot_no]]
                     else:
-                        spot_gene = self.nb.call_spots.gene_names[self.nb.ref_spots.gene_no[spot_no]]
+                        spot_gene = self.call_spots_gene_names[self.nb.ref_spots.gene_no[spot_no]]
                     self.viewer.status = f'Spot {spot_no}, {spot_gene} Selected'
                 elif n_selected > 1:
                     self.viewer.status = f'{n_selected} spots selected'
