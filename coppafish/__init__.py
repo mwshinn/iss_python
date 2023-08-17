@@ -9,3 +9,7 @@ try:
 except ModuleNotFoundError:
     # So no error if not installed napari/matplotlib etc
     pass
+
+# Clean up warnings
+import warnings
+warnings.formatwarning = lambda w,*args,**kwargs : str(w)+"\n"
